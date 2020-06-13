@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from enum import Enum, IntEnum
 from typing import Optional
+from random import randrange
 
 import attr
 import click
@@ -11,6 +12,20 @@ import click
 from .click_common import EnumType, command, format_output
 from .device import Device
 from .exceptions import DeviceException
+from .fake_device import ipv4_nonloop_ips
+from .gateway_scripts import (
+    action_id,
+    build_doublepress,
+    build_flip90,
+    build_flip180,
+    build_longpress,
+    build_move,
+    build_rotate,
+    build_shake,
+    build_shakeair,
+    build_singlepress,
+    build_taptap,
+)
 from .utils import brightness_and_color_to_int, int_to_brightness, int_to_rgb
 
 _LOGGER = logging.getLogger(__name__)
@@ -166,6 +181,8 @@ class Gateway(Device):
             DeviceType.Plug: AqaraPlug,
             DeviceType.SensorHT: SensorHT,
             DeviceType.AqaraHT: AqaraHT,
+            DeviceType.Cube: Cube,
+            DeviceType.AqaraSquareButton: AqaraSquareButton,
             DeviceType.AqaraMagnet: AqaraMagnet,
             DeviceType.AqaraSwitchOneChannel: AqaraSwitchOneChannel,
             DeviceType.AqaraSwitchTwoChannels: AqaraSwitchTwoChannels,
@@ -212,6 +229,47 @@ class Gateway(Device):
                 self._devices[dev_info.sid] = subdevice_cls(self, dev_info)
 
         return self._devices
+
+    def x_del(self, script_id):
+        """Delete script by id."""
+        return self.send("miIO.xdel", [script_id])
+
+    @command(
+        click.argument("sid"),
+        click.argument("command"),
+        click.argument("encoded_token"),
+    )
+    def subdevice_command(self, sid, command, encoded_token):
+        """Send command to subdevice."""
+        self.discover_devices()
+        target = list(filter(lambda subdevice: subdevice.sid == sid, self.devices))
+        if len(target) < 1:
+            return f"Device with sid={sid} not found"
+        elif not hasattr(target[0], command):
+            return f"Device with sid={sid} has no method {command}"
+        else:
+            return getattr(target[0], command)(encoded_token)
+
+    def install_script(self, sid, builder, encoded_token, ip=None):
+        """Install script for by building script source and sending it with miio method. You need to run fake or real device to capture script execution results."""
+        if ip is None:
+            addresses = ipv4_nonloop_ips()
+            my_ip = addresses[0]  # Taking first public IP
+        else:
+            my_ip = ip
+
+        data_tkn = randrange(5000, 10000)
+        source = builder(sid, my_ip, encoded_token)
+        return self.send(
+            "send_data_frame",
+            {
+                "cur": 0,
+                "data": source,
+                "data_tkn": data_tkn,
+                "total": 1,
+                "type": "scene",
+            },
+        )
 
     @command(click.argument("property"))
     def get_prop(self, property):
@@ -762,6 +820,21 @@ class SubDevice:
             )
         return self._fw_ver
 
+    @command()
+    def uninstall_scripts(self, encoded_token):
+        return dict(
+            map(
+                lambda action: (
+                    action,
+                    (
+                        action_id[action](self.sid),
+                        self._gw.x_del(action_id[action](self.sid)),
+                    ),
+                ),
+                action_id.keys(),
+            )
+        )
+
 
 class AqaraHT(SubDevice):
     """Subdevice AqaraHT specific properties and methods"""
@@ -952,6 +1025,67 @@ class AqaraSwitchTwoChannels(SubDevice):
         self._props.status_ch0 = values[0]
         self._props.status_ch1 = values[1]
         self._props.load_power = values[2]
+
+class Cube(SubDevice):
+    """Subdevice Cube specific properties and methods"""
+
+    properties = []
+
+    @command()
+    def install_move_script(self, encoded_token):
+        """Generate and install script which captures move event and sends miio package to device"""
+        return self._gw.install_script(self.sid, build_move, encoded_token)
+
+    @command()
+    def install_rotate_script(self, encoded_token):
+        """Generate and install script which captures rotate event and sends miio package to device"""
+        return self._gw.install_script(self.sid, build_rotate, encoded_token)
+
+    @command()
+    def install_shake_script(self, encoded_token):
+        """Generate and install script which captures shake in air event and sends miio package to device"""
+        return self._gw.install_script(self.sid, build_shakeair, encoded_token)
+
+    @command()
+    def install_flip90_script(self, encoded_token):
+        """Generate and install script which captures horizontal 90 flip and sends miio package to device"""
+        return self._gw.install_script(self.sid, build_flip90, encoded_token)
+
+    @command()
+    def install_taptap_script(self, encoded_token):
+        """Generate and install script which captures double tap on surface event and sends miio package to device"""
+        return self._gw.install_script(self.sid, build_taptap, encoded_token)
+
+    @command()
+    def install_flip180_script(self, encoded_token):
+        """Generate and install script which captures horizontal 180 flip and sends miio package to device"""
+        return self._gw.install_script(self.sid, build_flip180, encoded_token)
+
+
+class AqaraSquareButton(SubDevice):
+    """Subdevice AqaraSquareButton specific properties and methods"""
+
+    properties = []
+
+    @command()
+    def install_singlepress_script(self, encoded_token):
+        """Generate and install script which captures single press event and sends miio package to device"""
+        return self._gw.install_script(self.sid, build_singlepress, encoded_token)
+
+    @command()
+    def install_doublepress_script(self, encoded_token):
+        """Generate and install script which captures double press event and sends miio package to device"""
+        return self._gw.install_script(self.sid, build_doublepress, encoded_token)
+
+    @command()
+    def install_longpress_script(self, encoded_token):
+        """Generate and install script which captures loooong press event and sends miio package to device"""
+        return self._gw.install_script(self.sid, build_longpress, encoded_token)
+
+    @command()
+    def install_shake_script(self, encoded_token):
+        """Generate and install script which captures shake in air event and sends miio package to device"""
+        return self._gw.install_script(self.sid, build_shake, encoded_token)
 
 
 class AqaraWallOutlet(SubDevice):
