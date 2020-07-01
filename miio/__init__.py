@@ -23,6 +23,7 @@ from miio.device import Device
 from miio.exceptions import DeviceError, DeviceException
 from miio.fan import Fan, FanP5, FanSA1, FanV2, FanZA1, FanZA4
 from miio.gateway import Gateway
+from miio.gosund_plug import GosundPlug
 from miio.heater import Heater
 from miio.philips_bulb import PhilipsBulb, PhilipsWhiteBulb
 from miio.philips_eyecare import PhilipsEyecare

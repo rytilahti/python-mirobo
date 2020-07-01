@@ -63,7 +63,7 @@ class DummyMiotDevice(DummyDevice):
         self.state = [{"did": k, "value": v, "code": 0} for k, v in self.state.items()]
         super().__init__(*args, **kwargs)
 
-    def get_properties_for_mapping(self):
+    def get_properties_for_mapping(self, mapping=None):
         return self.state
 
     def set_property(self, property_key: str, value):
