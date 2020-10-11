@@ -38,6 +38,7 @@ from . import (
     Vacuum,
     ViomiVacuum,
     WaterPurifier,
+    WaterHeater,
     WifiRepeater,
     WifiSpeaker,
     Yeelight,
@@ -129,6 +130,7 @@ DEVICE_MAP = {
         AirHumidifierMjjsq, model=MODEL_HUMIDIFIER_MJJSQ
     ),
     "yunmi-waterpuri-v2": WaterPurifier,
+    "viomi-waterheater-e1": WaterHeater,
     "philips-light-bulb": PhilipsBulb,  # cannot be discovered via mdns
     "philips-light-hbulb": PhilipsWhiteBulb,  # cannot be discovered via mdns
     "philips-light-candle": PhilipsBulb,  # cannot be discovered via mdns
