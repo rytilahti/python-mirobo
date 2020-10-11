@@ -1,10 +1,10 @@
 import codecs
 import enum
 import logging
+import random
 import warnings
 from collections import defaultdict
-from datetime import time
-from typing import List, Optional, Dict, Union
+from typing import Dict, List, Optional, Union
 
 import click
 
@@ -131,6 +131,10 @@ class CookProfile:
                 self.data[i + 5] = 0
                 self.data[i + 6] = 20
                 self.data[i + 7] = 20
+            recipe_id = random.randint(0, 2 ** 32 - 1)
+            self.set_recipe_id(recipe_id)
+            self.set_recipe_name("Custom %d" % recipe_id)
+            self.set_duration(60)
 
     @property
     def is_v1(self):
@@ -147,19 +151,19 @@ class CookProfile:
         else:
             i = 37
         if value:
-            self.data[i] = (self.data[i] | 64)
+            self.data[i] = self.data[i] | 64
         else:
-            self.data[i] = (self.data[i] & 191)
+            self.data[i] = self.data[i] & 190
 
     def set_sequence(self, location=9):
         """Favorite location. set to 9 to not save, just request confirmation with set_start_remind."""
-        self.data[2] = (location & 255)
+        self.data[2] = location & 255
 
     def set_recipe_name(self, name):
         if name is None:
             name = ""
         name = name.replace(" ", "\n")
-        name_b = codecs.encode(name, 'ascii')
+        name_b = codecs.encode(name, "ascii")
         if self.is_v1:
             max_len = 13
         else:
@@ -219,40 +223,40 @@ class CookProfile:
             else:
                 # self.data[0] is the mode. There are 6 bits to set for the flag. I've only seen 2, 8, and 26 set.
                 phase = phases[phase_i]
-                temp_target = phase.get('temp', 0)
-                temp_threshold = phase.get('thresh', 229)
-                mode = phase.get('mode', 0)
-                fire = phase.get('fire' or 45)
-                minutes = phase.get('mins' or 0)
+                temp_target = phase.get("temp", 0)
+                temp_threshold = phase.get("thresh", 229)
+                mode = phase.get("mode", 0)
+                fire = phase.get("fire", 45)
+                minutes = phase.get("mins", 0)
                 hours = minutes // 60
                 minutes = minutes % 60
 
-                if mode == 'heat_until_temp' or mode == '2':
+                if mode == "heat_until_temp" or mode == "2":
                     self.data[o + 0] = 2  # not sure
                     self.data[o + 1] = 128
                     self.data[o + 2] = 45
                     self.data[o + 3] = temp_threshold
-                elif mode == '16':
+                elif mode == "16":
                     self.data[o + 0] = 16  # not sure
                     self.data[o + 1] = 128
                     self.data[o + 2] = 45
                     self.data[o + 3] = temp_threshold
-                elif mode == '10':
+                elif mode == "10":
                     self.data[o + 0] = 10  # not sure
                     self.data[o + 1] = 128
                     self.data[o + 2] = 45
                     self.data[o + 3] = temp_threshold
-                elif mode == '26':
+                elif mode == "26":
                     self.data[o + 0] = 26
                     self.data[o + 1] = 0
                     self.data[o + 2] = 45
                     self.data[o + 3] = temp_threshold
-                elif mode == 'continuous_output' or mode == '0':
+                elif mode == "continuous_output" or mode == "0":
                     self.data[o + 0] = 0
                     self.data[o + 1] = 128 + hours
                     self.data[o + 2] = minutes
                     self.data[o + 3] = temp_threshold
-                elif mode == 'heat_until_timer' or mode == '8':
+                elif mode == "heat_until_timer" or mode == "8":
                     self.data[o + 0] = 8  # heat until time
                     self.data[o + 1] = 128 + hours
                     self.data[o + 2] = minutes
@@ -279,10 +283,10 @@ class CookProfile:
             i = 17
         else:
             i = 33
-        self.data[i + 0] = ((j >> 24) & 255)
-        self.data[i + 1] = ((j >> 16) & 255)
-        self.data[i + 2] = ((j >> 8) & 255)
-        self.data[i + 3] = (j & 255)
+        self.data[i + 0] = (j >> 24) & 255
+        self.data[i + 1] = (j >> 16) & 255
+        self.data[i + 2] = (j >> 8) & 255
+        self.data[i + 3] = j & 255
 
     def set_duration(self, minutes):
         """Sets global timer for recipe. Runs independently from recipe phase timers."""
@@ -329,10 +333,10 @@ class CookProfile:
         self.data[mystery_bit_i] = 1  # This bit is always set
         crc = calcrc(self.data, n - 2)
 
-        self.data[-2] = ((crc >> 8) & 255)
-        self.data[-1] = (crc & 255)
+        self.data[-2] = (crc >> 8) & 255
+        self.data[-1] = crc & 255
 
-        return codecs.encode(self.data, 'hex').decode('ascii')
+        return codecs.encode(self.data, "hex").decode("ascii")
 
 
 class IHCookerStatus:
@@ -380,14 +384,20 @@ class IHCookerStatus:
         elif self.is_v2:
             return int(self.data["menu"][58:], 16)
         else:
-            raise IHCookerException("Model %s currently unsupported, please report this on github." % self.model)
+            raise IHCookerException(
+                "Model %s currently unsupported, please report this on github."
+                % self.model
+            )
 
     @property
     def recipe_name(self):
         if self.is_v1:
-            return bytes.fromhex(self.data['menu'][2:28]).decode('ascii').strip("\x00")
-        elif self.is_v2:
-            return bytes.fromhex(self.data['menu'][2:58]).decode('ascii').strip("\x00")
+            cap = 28
+        else:
+            cap = 58
+        name = bytes.fromhex(self.data["menu"][2:cap]).decode("ascii").strip("\x00")
+        name = name.replace("\n", " ")
+        return name
 
     @property
     def is_error(self):
@@ -400,7 +410,7 @@ class IHCookerStatus:
         if not self.is_error:
             action = self.data["action"]
             if len(action) >= 6:
-                return int.from_bytes(bytes.fromhex(action[0:2]), 'little')
+                return int.from_bytes(bytes.fromhex(action[0:2]), "little")
         return None
 
     @property
@@ -413,7 +423,7 @@ class IHCookerStatus:
         if not self.is_error:
             action = self.data["action"]
             if len(action) >= 6:
-                return int.from_bytes(bytes.fromhex(action[2:4]), 'little')
+                return int.from_bytes(bytes.fromhex(action[2:4]), "little")
         return None
 
     @property
@@ -424,7 +434,7 @@ class IHCookerStatus:
         if not self.is_error:
             action = self.data["action"]
             if len(action) >= 6:
-                return int.from_bytes(bytes.fromhex(action[4:6]), 'little')
+                return int.from_bytes(bytes.fromhex(action[4:6]), "little")
         return None
 
     @property
@@ -441,7 +451,7 @@ class IHCookerStatus:
         if not self.is_error:
             action = self.data["action"]
             if len(action) >= 8:
-                return int.from_bytes(bytes.fromhex(action[6:8]), 'little')
+                return int.from_bytes(bytes.fromhex(action[6:8]), "little")
         return None
 
     @property
@@ -450,7 +460,7 @@ class IHCookerStatus:
         if not self.is_error:
             action = self.data["action"]
             if len(action) >= 10:
-                return int.from_bytes(bytes.fromhex(action[8:10]), 'little')
+                return int.from_bytes(bytes.fromhex(action[8:10]), "little")
         return None
 
     # Play-field parsing
@@ -460,7 +470,7 @@ class IHCookerStatus:
         if not self.is_error:
             play = self.data["play"]
             if len(play) == 18:
-                return int.from_bytes(bytes.fromhex(play[0:2]), 'little')
+                return int.from_bytes(bytes.fromhex(play[0:2]), "little")
         return None
 
     @property
@@ -469,7 +479,7 @@ class IHCookerStatus:
         if not self.is_error:
             play = self.data["play"]
             if len(play) == 18:
-                return int.from_bytes(bytes.fromhex(play[2:4]), 'little')
+                return int.from_bytes(bytes.fromhex(play[2:4]), "little")
         return None
 
     @property
@@ -479,7 +489,7 @@ class IHCookerStatus:
         if not self.is_error:
             play = self.data["play"]
             if len(play) == 18:
-                return int.from_bytes(bytes.fromhex(play[4:6]), 'little')
+                return int.from_bytes(bytes.fromhex(play[4:6]), "little")
         return None
 
     @property
@@ -488,7 +498,7 @@ class IHCookerStatus:
         if not self.is_error:
             play = self.data["play"]
             if len(play) == 18:
-                return int.from_bytes(bytes.fromhex(play[6:8]), 'little')
+                return int.from_bytes(bytes.fromhex(play[6:8]), "little")
         return None
 
     @property
@@ -497,16 +507,7 @@ class IHCookerStatus:
         if not self.is_error:
             play = self.data["play"]
             if len(play) == 18:
-                return int.from_bytes(bytes.fromhex(play[8:10]), 'little')
-        return None
-
-    @property
-    def temperature_upperbound(self) -> Optional[int]:
-        """Appears to be an upperbound on the estimate of the temperature."""
-        if not self.is_error:
-            play = self.data["play"]
-            if len(play) == 18:
-                return int.from_bytes(bytes.fromhex(play[12:14]), 'little')
+                return int.from_bytes(bytes.fromhex(play[8:10]), "little")
         return None
 
     @property
@@ -515,7 +516,16 @@ class IHCookerStatus:
         if not self.is_error:
             play = self.data["play"]
             if len(play) == 18:
-                return int.from_bytes(bytes.fromhex(play[14:16]), 'little')
+                return int.from_bytes(bytes.fromhex(play[12:14]), "little")
+        return None
+
+    @property
+    def temperature_upperbound(self) -> Optional[int]:
+        """Appears to be an upperbound on the estimate of the temperature."""
+        if not self.is_error:
+            play = self.data["play"]
+            if len(play) == 18:
+                return int.from_bytes(bytes.fromhex(play[14:16]), "little")
         return None
 
     @property
@@ -524,21 +534,7 @@ class IHCookerStatus:
         if not self.is_error:
             play = self.data["play"]
             if len(play) == 18:
-                return int.from_bytes(bytes.fromhex(play[4:6]), 'little')
-        return None
-
-    @property
-    def start_time(self) -> Optional[time]:
-        """
-        Start time of cooking?
-
-        The property "temp" is used for different purposes.
-        Example values: 29, *031e0b23*, 031e0b23031e
-        """
-        value = self.data["temp"]
-        if len(value) == 8:
-            return time(hour=int(value[4:6], 16), minute=int(value[6:8], 16))
-
+                return int.from_bytes(bytes.fromhex(play[4:6]), "little")
         return None
 
     # TODO: Fully parse timer field.
@@ -556,7 +552,7 @@ class IHCookerStatus:
     def wifi_led_setting(self) -> Optional[bool]:
         """Blue wifi led setting at bottom of device: true if led remains on at idle."""
         if "set_wifi_led" in self.data:
-            return bool(self.data["set_wifi_led"])
+            return bool(self.data["set_wifi_led"] == "01")
         else:
             return None
 
@@ -572,30 +568,30 @@ class IHCookerStatus:
 
     def __repr__(self) -> str:
         s = (
-                "<CookerStatus mode=%s "
-                "menu=%s, "
-                "stage=%s, "
-                "temperature=%s, "
-                # "start_time=%s"
-                # "remaining=%s, "
-                # "cooking_delayed=%s, "
-                "target_temperature=%s, "
-                "wifi_led_setting=%s, "
-                "hardware_version=%s, "
-                "firmware_version=%s>"
-                % (
-                    self.mode,
-                    self.recipe_name,
-                    self.stage,
-                    self.temperature,
-                    self.target_temp,
-                    # self.start_time,
-                    # self.remaining,
-                    # self.cooking_delayed,
-                    self.wifi_led_setting,
-                    self.hardware_version,
-                    self.firmware_version,
-                )
+            "<CookerStatus mode=%s "
+            "menu=%s, "
+            "stage=%s, "
+            "temperature=%s, "
+            # "start_time=%s"
+            # "remaining=%s, "
+            # "cooking_delayed=%s, "
+            "target_temperature=%s, "
+            "wifi_led_setting=%s, "
+            "hardware_version=%s, "
+            "firmware_version=%s>"
+            % (
+                self.mode,
+                self.recipe_name,
+                self.stage,
+                self.temperature,
+                self.target_temp,
+                # self.start_time,
+                # self.remaining,
+                # self.cooking_delayed,
+                self.wifi_led_setting,
+                self.hardware_version,
+                self.firmware_version,
+            )
         )
         return s
 
@@ -605,10 +601,16 @@ class IHCooker(Device):
 
     Custom recipes can be build with the CookProfile class."""
 
-    def __init__(self, ip: str = None, token: str = None, start_id: int = 0, debug: int = 0,
-                 lazy_discover: bool = True) -> None:
+    def __init__(
+        self,
+        ip: str = None,
+        token: str = None,
+        start_id: int = 0,
+        debug: int = 0,
+        lazy_discover: bool = True,
+    ) -> None:
         super().__init__(ip, token, start_id, debug, lazy_discover)
-        self.model = None
+        self._model = None
 
     @command(
         # TODO: update these below.
@@ -618,13 +620,30 @@ class IHCooker(Device):
             "Menu: {result.menu}\n"
             "Temperature: {result.temperature}\n"
             "Hardware version: {result.hardware_version}\n"
-            "Firmware version: {result.firmware_version}\n"
+            "Firmware version: {result.firmware_version}\n",
         )
     )
     def status(self) -> IHCookerStatus:
         """Retrieve properties."""
-        properties_new = ["func", "menu", "action", "t_func", "version", "profiles", "set_wifi_led", "play"]
-        properties_old = ["func", "menu", "action", "t_func", "version", "profiles", "play"]
+        properties_new = [
+            "func",
+            "menu",
+            "action",
+            "t_func",
+            "version",
+            "profiles",
+            "set_wifi_led",
+            "play",
+        ]
+        properties_old = [
+            "func",
+            "menu",
+            "action",
+            "t_func",
+            "version",
+            "profiles",
+            "play",
+        ]
 
         values = self.send("get_prop", ["all"])
 
@@ -635,13 +654,13 @@ class IHCooker(Device):
         else:
             raise IHCookerException(
                 "Count (%d or %d) of requested properties does not match the "
-                "count (%s) of received values." % (
-                    len(properties_new),
-                    len(properties_old),
-                    len(values)),
+                "count (%s) of received values."
+                % (len(properties_new), len(properties_old), len(values)),
             )
 
-        return IHCookerStatus(self.model, defaultdict(lambda: None, zip(properties, values)))
+        return IHCookerStatus(
+            self.model, defaultdict(lambda: None, zip(properties, values))
+        )
 
     @command(
         click.argument("profile", type=str),
@@ -657,11 +676,13 @@ class IHCooker(Device):
         profile.set_save_recipe(False)
         profile.set_sequence(9)
         if skip_confirmation:
-            warnings.warn("You're starting a profile without confirmation, which is a potentially unsafe.")
+            warnings.warn(
+                "You're starting a profile without confirmation, which is a potentially unsafe."
+            )
             self.send("set_start", [profile.to_hex()])
         else:
             profile.set_start_remind(True)
-            self.send("set_menu", [profile.to_hex()])
+            self.send("set_menu1", [profile.to_hex()])
 
     @command(default_output=format_output("Cooking stopped"))
     def stop(self):
@@ -678,40 +699,48 @@ class IHCooker(Device):
     @command(default_output=format_output("WiFi led setting changed."))
     def set_wifi_led(self, value: bool):
         """Keep wifi-led on when idle."""
-        self.send("set_wifi_state", [self.device_prefix + "01" if value else "00"])
+        return self.send(
+            "set_wifi_state", [self.device_prefix + "01" if value else "00"]
+        )
 
     @command(
         click.argument("profile", type=str),
         default_output=format_output("Setting menu to {profile}"),
     )
-    def set_menu(self, profile: Union[str, CookProfile], location: int, confirm_start=False):
+    def set_menu(
+        self, profile: Union[str, CookProfile], location: int, confirm_start=False
+    ):
         """Updates one of the menu options with the profile.
 
         Args:
         - location, int in range(8)
         - confirm_start, if True, request confirmation to start recipe as well."""
         profile = self._prepare_profile(profile)
-
+        if location >= 8 or location < 0:
+            raise IHCookerException("location %d must be in [0,7]." % location)
         profile.set_save_recipe(True)
         profile.set_sequence(location)
         profile.set_start_remind(confirm_start)
 
-        self.send("set_menu", [profile.to_hex()])
+        self.send("set_menu%d" % location, [profile.to_hex()])
 
     def _prepare_profile(self, profile):
         if isinstance(profile, str):
             profile = CookProfile(self.model, profile)
         return profile
 
-    def get_model(self):
-        if self.model is None:
-            self.model = self.info().model
-        return self.model
+    @property
+    def model(self):
+        if self._model is None:
+            self._model = self.info().model
+        return self._model
 
     @property
     def device_prefix(self):
-        model = self.get_model()
-        prefix = DEVICE_PREFIX.get(model, None)
+        prefix = DEVICE_PREFIX.get(self.model, None)
         if prefix is None:
-            raise IHCookerException("Model %s currently unsupported, please report this on github." % self.model)
+            raise IHCookerException(
+                "Model %s currently unsupported, please report this on github."
+                % self.model
+            )
         return prefix
