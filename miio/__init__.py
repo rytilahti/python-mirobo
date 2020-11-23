@@ -36,6 +36,7 @@ from miio.fan import Fan, FanP5, FanSA1, FanV2, FanZA1, FanZA4
 from miio.fan_miot import FanMiot, FanP9, FanP10, FanP11
 from miio.gateway import Gateway
 from miio.heater import Heater
+from miio.ihcooker import IHCooker
 from miio.philips_bulb import PhilipsBulb, PhilipsWhiteBulb
 from miio.philips_eyecare import PhilipsEyecare
 from miio.philips_moonlight import PhilipsMoonlight

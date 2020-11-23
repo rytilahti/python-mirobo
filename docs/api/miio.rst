@@ -39,6 +39,7 @@ Submodules
    miio.fan_miot
    miio.gateway
    miio.heater
+   miio.ihcooker
    miio.miioprotocol
    miio.miot_device
    miio.philips_bulb
