@@ -8,9 +8,7 @@ from miio.exceptions import DeviceException
 from miio.viomidishwasher import (
     MODEL_DISWAHSER_M02,
     ChildLockStatus,
-    DoorStatus,
     MachineStatus,
-    PowerStatus,
     Program,
     ProgramStatus,
     SystemStatus,
@@ -119,10 +117,10 @@ class TestViomiDishwasher(TestCase):
             ViomiDishwasherStatus(self.device.start_state)
         )
 
-        assert self.state().power == PowerStatus.On
+        assert self.state().power is True
         assert self.state().program == Program.Quick
-        assert self.state().door == DoorStatus.Open
-        assert self.state().child_lock == ChildLockStatus.Enabled
+        assert self.state().door_open is True
+        assert self.state().child_lock is True
         assert self.state().program_progress == ProgramStatus.Rinse
         assert self.state().status == MachineStatus.Running
         assert self.device._is_running() is True
@@ -136,10 +134,10 @@ class TestViomiDishwasher(TestCase):
         assert self.is_on() is True
 
         self.device.child_lock(ChildLockStatus.Enabled)
-        assert self.state().child_lock == ChildLockStatus.Enabled
+        assert self.state().child_lock is True
 
         self.device.child_lock(ChildLockStatus.Disabled)
-        assert self.state().child_lock == ChildLockStatus.Disabled
+        assert self.state().child_lock is False
 
     def test_program(self):
         self.device.on()  # ensure on
@@ -160,11 +158,10 @@ class TestViomiDishwasher(TestCase):
         self.device.stop()
         self.device.state["wash_process"] = 0
 
-        enough_time = (datetime.now() + timedelta(hours=3)).replace(
+        enough_time = (datetime.now() + timedelta(hours=1)).replace(
             second=0, microsecond=0
         )
-        self.device.schedule(enough_time, Program.Intensive)
-        assert self.state().program == Program.Intensive
+        self.device.schedule(enough_time, Program.Quick)
         self.assertIsInstance(self.state().schedule, datetime)
         assert self.state().schedule == enough_time
 
