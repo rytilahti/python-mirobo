@@ -57,6 +57,7 @@ from miio.vacuumcontainers import (
     Timer,
     VacuumStatus,
 )
+from miio.viomidishwasher import ViomiDishwasher
 from miio.viomivacuum import ViomiVacuum
 from miio.waterpurifier import WaterPurifier
 from miio.waterpurifier_yunmi import WaterPurifierYunmi
