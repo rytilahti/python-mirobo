@@ -41,6 +41,7 @@ sphinx_click = { version = "^2", optional = true }
 sphinxcontrib-apidoc = { version = "^0", optional = true }
 sphinx_rtd_theme = { version = "^0", optional = true }
 PyYAML = "^5"
+crcmod = "^1.7"
 
 [tool.poetry.extras]
 docs = ["sphinx", "sphinx_click", "sphinxcontrib-apidoc", "sphinx_rtd_theme"]
