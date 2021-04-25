@@ -13,11 +13,6 @@ _MAPPING = {
     "current_position": {"siid": 2, "piid": 2},  # Range: [0, 100, 1]
     "target_position": {"siid": 2, "piid": 4},  # Range: [0, 100, 1]
     "mode": {"siid": 2, 'piid': 4},  # 0 - Normal,  1 - Reversal, 2 - Calibrate
-    # Info
-    "Device Manufacturer": {"siid": 1, 'piid': 1},
-    "Device Model": {"siid": 1, 'piid': 2},
-    "Device Serial Number": {"siid": 1, 'piid': 3},
-    "Current Firmware Version": {"siid": 1, 'piid': 4},
 }
 # Model: "OnViz Curtain Controller (Wi-Fi)"
 MODEL_CURTAIN_BABAI = "babai.curtain.190812"
