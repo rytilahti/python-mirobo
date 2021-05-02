@@ -31,6 +31,7 @@ from miio.chuangmi_ir import ChuangmiIr
 from miio.chuangmi_plug import ChuangmiPlug, Plug, PlugV1, PlugV3
 from miio.cooker import Cooker
 from miio.curtain_youpin import CurtainMiot
+from miio.curtain_babai import CurtainBabai
 from miio.device import Device, DeviceStatus
 from miio.dreamevacuum_miot import DreameVacuumMiot
 from miio.exceptions import DeviceError, DeviceException
