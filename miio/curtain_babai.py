@@ -110,11 +110,10 @@ class CurtainBabai(MiotDevice):
         try:
             prop = self.get_property_by(siid=v["siid"], piid=v["piid"])
         except DeviceError as e:
-            if e.code == -9999:
-                sleep(5)
-                prop = self.get_property_by(siid=v["siid"], piid=v["piid"])
-            else:
+            if e.code != -9999:
                 raise
+            sleep(5)
+            prop = self.get_property_by(siid=v["siid"], piid=v["piid"])
         for p in prop:
             p["did"] = name
         return prop
