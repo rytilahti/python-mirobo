@@ -1,12 +1,12 @@
 from enum import Enum
 from time import sleep
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 import click
-from .exceptions import DeviceError
 
 from .click_common import EnumType, command, format_output
-from .miot_device import MiotDevice, DeviceStatus
+from .exceptions import DeviceError
+from .miot_device import DeviceStatus, MiotDevice
 
 _MAPPING = {
     # Source
@@ -16,7 +16,7 @@ _MAPPING = {
     "motor_control": {"siid": 2, "piid": 1},  # 0 - Pause, 1 - Open, 2 - Close
     "current_position": {"siid": 2, "piid": 2},  # Range: [0, 100, 1]
     "target_position": {"siid": 2, "piid": 3},  # Range: [0, 100, 1]
-    "mode": {"siid": 2, 'piid': 4},  # 0 - Normal,  1 - Reversal, 2 - Calibrate
+    "mode": {"siid": 2, "piid": 4},  # 0 - Normal,  1 - Reversal, 2 - Calibrate
 }
 
 # Model: "OnViz Curtain Controller (Wi-Fi)"
@@ -38,6 +38,7 @@ class Mode(Enum):
 class CurtainStatus(DeviceStatus):
     def __init__(self, data: Dict[str, Any]) -> None:
         """Response from device.
+
         {'motor_control': 0}
         """
         self.data = data
@@ -89,7 +90,7 @@ class CurtainBabai(MiotDevice):
             "Motor control: {result.motor_control}\n"
             "Motor mode: {result.mode}\n"
             "Current position: {result.current_position}\n"
-            "Target position: {result.target_position}\n"
+            "Target position: {result.target_position}\n",
         )
     )
     def status(self) -> CurtainStatus:
@@ -104,26 +105,23 @@ class CurtainBabai(MiotDevice):
 
     def get_property(self, name: str) -> List[Dict[str, Any]]:
         if name not in self.mapping:
-            raise ValueError('key %s not in MAPING', name)
+            raise ValueError("key %s not in MAPING", name)
         v = self.mapping[name]
         try:
-            prop = self.get_property_by(siid=v['siid'], piid=v['piid'])
+            prop = self.get_property_by(siid=v["siid"], piid=v["piid"])
         except DeviceError as e:
             if e.code == -9999:
                 sleep(5)
-                prop = self.get_property_by(siid=v['siid'], piid=v['piid'])
+                prop = self.get_property_by(siid=v["siid"], piid=v["piid"])
             else:
                 raise
         for p in prop:
-            p['did'] = name
+            p["did"] = name
         return prop
 
     @staticmethod
     def _extract_property_value(prop: List[Dict[str, Any]]) -> Dict[str, Any]:
-        return {
-            p["did"]: p["value"] if p["code"] == 0 else None
-            for p in prop
-        }
+        return {p["did"]: p["value"] if p["code"] == 0 else None for p in prop}
 
     def _get_property_value(self, name: str) -> Any:
         prop = self.get_property(name)
