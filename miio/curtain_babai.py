@@ -54,7 +54,7 @@ class CurtainStatus(DeviceStatus):
         return self.motor_control == MotorControl.Open
 
     @property
-    def is_close(self) -> bool:
+    def is_closed(self) -> bool:
         """Device status."""
         return self.motor_control == MotorControl.Close
 
