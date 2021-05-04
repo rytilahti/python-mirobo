@@ -49,11 +49,6 @@ class CurtainStatus(DeviceStatus):
         return MotorControl(self.data["motor_control"])
 
     @property
-    def motor_control(self) -> MotorControl:
-        """Device status."""
-        return MotorControl(self.data["motor_control"])
-
-    @property
     def is_open(self) -> bool:
         """Device status."""
         return self.motor_control == MotorControl.Open
