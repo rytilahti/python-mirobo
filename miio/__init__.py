@@ -36,7 +36,7 @@ from miio.dreamevacuum_miot import DreameVacuumMiot
 from miio.exceptions import DeviceError, DeviceException
 from miio.fan import Fan, FanP5, FanSA1, FanV2, FanZA1, FanZA4
 from miio.fan_leshow import FanLeshow
-from miio.fan_miot import Fan1C, FanMiot, FanP9, FanP10, FanP11
+from miio.fan_miot import Fan1C, FanMiot, FanP8, FanP9, FanP10, FanP11
 from miio.gateway import Gateway
 from miio.heater import Heater
 from miio.heater_miot import HeaterMiot

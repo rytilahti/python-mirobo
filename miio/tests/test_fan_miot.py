@@ -2,9 +2,10 @@ from unittest import TestCase
 
 import pytest
 
-from miio import Fan1C, FanMiot
+from miio import Fan1C, FanP8, FanP9, FanP10, FanP11
 from miio.fan_miot import (
     MODEL_FAN_1C,
+    MODEL_FAN_P8,
     MODEL_FAN_P9,
     MODEL_FAN_P10,
     MODEL_FAN_P11,
@@ -15,7 +16,7 @@ from miio.fan_miot import (
 from .dummies import DummyMiotDevice
 
 
-class DummyFanMiot(DummyMiotDevice, FanMiot):
+class DummyFanP9(DummyMiotDevice, FanP9):
     def __init__(self, *args, **kwargs):
         self.model = MODEL_FAN_P9
         self.state = {
@@ -33,12 +34,12 @@ class DummyFanMiot(DummyMiotDevice, FanMiot):
 
 
 @pytest.fixture(scope="class")
-def fanmiot(request):
-    request.cls.device = DummyFanMiot()
+def fanp9(request):
+    request.cls.device = DummyFanP9()
 
 
-@pytest.mark.usefixtures("fanmiot")
-class TestFanMiot(TestCase):
+@pytest.mark.usefixtures("fanp9")
+class TestFanP9(TestCase):
     def is_on(self):
         return self.device.status().is_on
 
@@ -173,19 +174,19 @@ class TestFanMiot(TestCase):
             self.device.delay_off(481)
 
 
-class DummyFanMiotP10(DummyFanMiot, FanMiot):
+class DummyFanP10(DummyFanP9, FanP10):
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
         self.model = MODEL_FAN_P10
 
 
 @pytest.fixture(scope="class")
-def fanmiotp10(request):
-    request.cls.device = DummyFanMiotP10()
+def fanp10(request):
+    request.cls.device = DummyFanP10()
 
 
-@pytest.mark.usefixtures("fanmiotp10")
-class TestFanMiotP10(TestCase):
+@pytest.mark.usefixtures("fanp10")
+class TestFanP10(TestCase):
     def test_set_angle(self):
         def angle():
             return self.device.status().angle
@@ -217,19 +218,19 @@ class TestFanMiotP10(TestCase):
             self.device.set_angle(141)
 
 
-class DummyFanMiotP11(DummyFanMiot, FanMiot):
+class DummyFanP11(DummyFanP9, FanP11):
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
         self.model = MODEL_FAN_P11
 
 
 @pytest.fixture(scope="class")
-def fanmiotp11(request):
-    request.cls.device = DummyFanMiotP11()
+def fanp11(request):
+    request.cls.device = DummyFanP11()
 
 
-@pytest.mark.usefixtures("fanmiotp11")
-class TestFanMiotP11(TestFanMiotP10, TestCase):
+@pytest.mark.usefixtures("fanp11")
+class TestFanP11(TestFanP10, TestCase):
     pass
 
 
@@ -358,3 +359,19 @@ class TestFan1C(TestCase):
             self.device.delay_off(-1)
         with pytest.raises(FanException):
             self.device.delay_off(481)
+
+
+class DummyFanP8(DummyFan1C, FanP8):
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.model = MODEL_FAN_P8
+
+
+@pytest.fixture(scope="class")
+def fanp8(request):
+    request.cls.device = DummyFanP8()
+
+
+@pytest.mark.usefixtures("fanp8")
+class TestFanP8(TestFan1C, TestCase):
+    pass
