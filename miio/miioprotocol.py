@@ -62,7 +62,7 @@ class MiIOProtocol:
         :raises DeviceException: if the device could not be discovered after retries.
         """
         try:
-            m = MiIOProtocol.discover(self.ip)
+            m = MiIOProtocol.discover(self.ip, is_broadcast=False)
         except DeviceException as ex:
             if retry_count > 0:
                 return self.send_handshake(retry_count=retry_count - 1)
@@ -90,18 +90,22 @@ class MiIOProtocol:
         return m
 
     @staticmethod
-    def discover(addr: str = None, timeout: int = 5) -> Any:
+    def discover(addr: str = None, is_broadcast: bool = True, timeout: int = 5) -> Any:
         """Scan for devices in the network. This method is used to discover supported
         devices by sending a handshake message to the broadcast address on port 54321.
-        If the target IP address is given, the handshake will be send as an unicast
-        packet.
+        If the target IP address is given and is_broadcast is False, the handshake 
+        will be send as a unicast packet. 
+        If is_broadcast is True, then addr can optionally specify the target network
+        to send the broadcast to. This is necessary for Windows platforms.
 
-        :param str addr: Target IP address
+        :param str addr: Target IP address or network
+        :param bool is_broadcast: True to broadcast, False to unicast
+        :param int timeout: Time to wait for discovering new devices
         """
-        is_broadcast = addr is None
         seen_addrs = []  # type: List[str]
         if is_broadcast:
-            addr = "<broadcast>"
+            if not addr:
+                addr = "<broadcast>"
             is_broadcast = True
             _LOGGER.info("Sending discovery to %s with timeout of %ss..", addr, timeout)
         # magic, length 32

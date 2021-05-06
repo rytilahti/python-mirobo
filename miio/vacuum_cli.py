@@ -97,10 +97,11 @@ def cleanup(vac: miio.Vacuum, *args, **kwargs):
 
 @cli.command()
 @click.option("--handshake", type=bool, default=False)
-def discover(handshake):
+@click.option("--subnet", type=str, default="<broadcast>")
+def discover(handshake, subnet):
     """Search for robots in the network."""
     if handshake:
-        MiIOProtocol.discover()
+        MiIOProtocol.discover(subnet, is_broadcast=True)
     else:
         miio.Discovery.discover_mdns()
 
