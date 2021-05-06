@@ -43,6 +43,7 @@ Submodules
    miio.cooker
    miio.curtain_youpin
    miio.device
+   miio.deviceinfo
    miio.discovery
    miio.dreamevacuum_miot
    miio.exceptions

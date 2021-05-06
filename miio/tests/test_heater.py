@@ -10,7 +10,7 @@ from .dummies import DummyDevice
 
 class DummyHeater(DummyDevice, Heater):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_HEATER_ZA1
+        self._model = MODEL_HEATER_ZA1
         # This example response is just a guess. Please update!
         self.state = {
             "target_temperature": 24,

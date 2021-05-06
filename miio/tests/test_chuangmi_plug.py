@@ -15,7 +15,7 @@ from .dummies import DummyDevice
 
 class DummyChuangmiPlugV1(DummyDevice, ChuangmiPlug):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_CHUANGMI_PLUG_V1
+        self._model = MODEL_CHUANGMI_PLUG_V1
         self.state = {"on": True, "usb_on": True, "temperature": 32}
         self.return_values = {
             "get_prop": self._get_state,
@@ -86,7 +86,7 @@ class TestChuangmiPlugV1(TestCase):
 
 class DummyChuangmiPlugV3(DummyDevice, ChuangmiPlug):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_CHUANGMI_PLUG_V3
+        self._model = MODEL_CHUANGMI_PLUG_V3
         self.state = {"on": True, "usb_on": True, "temperature": 32, "wifi_led": "off"}
         self.return_values = {
             "get_prop": self._get_state,
@@ -177,7 +177,7 @@ class TestChuangmiPlugV3(TestCase):
 
 class DummyChuangmiPlugM1(DummyDevice, ChuangmiPlug):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_CHUANGMI_PLUG_M1
+        self._model = MODEL_CHUANGMI_PLUG_M1
         self.state = {"power": "on", "temperature": 32}
         self.return_values = {
             "get_prop": self._get_state,

@@ -7,6 +7,7 @@ from typing import Any, Optional  # noqa: F401
 import click
 
 from .click_common import DeviceGroupMeta, LiteralParamType, command, format_output
+from .deviceinfo import DeviceInfo
 from .exceptions import DeviceInfoUnavailableException, PayloadDecodeException
 from .miioprotocol import MiIOProtocol
 
@@ -18,88 +19,6 @@ class UpdateState(Enum):
     Installing = "installing"
     Failed = "failed"
     Idle = "idle"
-
-
-class DeviceInfo:
-    """Container of miIO device information.
-
-    Hardware properties such as device model, MAC address, memory information, and
-    hardware and software information is contained here.
-    """
-
-    def __init__(self, data):
-        """Response of a Xiaomi Smart WiFi Plug.
-
-        {'ap': {'bssid': 'FF:FF:FF:FF:FF:FF', 'rssi': -68, 'ssid': 'network'},
-         'cfg_time': 0,
-         'fw_ver': '1.2.4_16',
-         'hw_ver': 'MW300',
-         'life': 24,
-         'mac': '28:FF:FF:FF:FF:FF',
-         'mmfree': 30312,
-         'model': 'chuangmi.plug.m1',
-         'netif': {'gw': '192.168.xxx.x',
-                   'localIp': '192.168.xxx.x',
-                   'mask': '255.255.255.0'},
-         'ot': 'otu',
-         'ott_stat': [0, 0, 0, 0],
-         'otu_stat': [320, 267, 3, 0, 3, 742],
-         'token': '2b00042f7481c7b056c4b410d28f33cf',
-         'wifi_fw_ver': 'SD878x-14.76.36.p84-702.1.0-WM'}
-        """
-        self.data = data
-
-    def __repr__(self):
-        return "%s v%s (%s) @ %s - token: %s" % (
-            self.data["model"],
-            self.data["fw_ver"],
-            self.data["mac"],
-            self.network_interface["localIp"],
-            self.data["token"],
-        )
-
-    @property
-    def network_interface(self):
-        """Information about network configuration."""
-        return self.data["netif"]
-
-    @property
-    def accesspoint(self):
-        """Information about connected wlan accesspoint."""
-        return self.data["ap"]
-
-    @property
-    def model(self) -> Optional[str]:
-        """Model string if available."""
-        if self.data["model"] is not None:
-            return self.data["model"]
-        return None
-
-    @property
-    def firmware_version(self) -> Optional[str]:
-        """Firmware version if available."""
-        if self.data["fw_ver"] is not None:
-            return self.data["fw_ver"]
-        return None
-
-    @property
-    def hardware_version(self) -> Optional[str]:
-        """Hardware version if available."""
-        if self.data["hw_ver"] is not None:
-            return self.data["hw_ver"]
-        return None
-
-    @property
-    def mac_address(self) -> Optional[str]:
-        """MAC address if available."""
-        if self.data["mac"] is not None:
-            return self.data["mac"]
-        return None
-
-    @property
-    def raw(self):
-        """Raw data as returned by the device."""
-        return self.data
 
 
 class DeviceStatus:
@@ -144,9 +63,13 @@ class Device(metaclass=DeviceGroupMeta):
         debug: int = 0,
         lazy_discover: bool = True,
         timeout: int = None,
+        *,
+        model: str = None,
     ) -> None:
         self.ip = ip
         self.token = token
+        self._model = model
+        self._info = None
         timeout = timeout if timeout is not None else self.timeout
         self._protocol = MiIOProtocol(
             ip, token, start_id, debug, lazy_discover, timeout
@@ -173,6 +96,7 @@ class Device(metaclass=DeviceGroupMeta):
         :param dict parameters: Parameters to send
         :param int retry_count: How many times to retry on error
         :param dict extra_parameters: Extra top-level parameters
+        :param str model: Force model to avoid autodetection
         """
         retry_count = retry_count if retry_count is not None else self.retry_count
         return self._protocol.send(
@@ -202,25 +126,42 @@ class Device(metaclass=DeviceGroupMeta):
             "Model: {result.model}\n"
             "Hardware version: {result.hardware_version}\n"
             "Firmware version: {result.firmware_version}\n",
-        )
+        ),
+        skip_autodetect=True,
     )
-    def info(self) -> DeviceInfo:
-        """Get miIO protocol information from the device.
+    def info(self, *, skip_cache=False) -> DeviceInfo:
+        """Get (and cache) miIO protocol information from the device.
 
         This includes information about connected wlan network, and hardware and
         software versions.
+
+        :param force bool: Skip the cache
         """
+        if self._info is not None and not skip_cache:
+            return self._info
+
         try:
-            return DeviceInfo(self.send("miIO.info"))
+            devinfo = DeviceInfo(self.send("miIO.info"))
+            self._info = devinfo
+            _LOGGER.info("Detected model %s", devinfo.model)
+            return devinfo
         except PayloadDecodeException as ex:
             raise DeviceInfoUnavailableException(
                 "Unable to request miIO.info from the device"
             ) from ex
 
     @property
-    def raw_id(self):
+    def raw_id(self) -> int:
         """Return the last used protocol sequence id."""
         return self._protocol.raw_id
+
+    @property
+    def model(self) -> str:
+        """Return device model."""
+        if self._model is not None:
+            return self._model
+
+        return self.info().model
 
     def update(self, url: str, md5: str):
         """Start an OTA update."""

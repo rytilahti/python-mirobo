@@ -15,7 +15,7 @@ from .dummies import DummyDevice
 
 class DummyPhilipsBulb(DummyDevice, PhilipsBulb):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_PHILIPS_LIGHT_BULB
+        self._model = MODEL_PHILIPS_LIGHT_BULB
         self.state = {"power": "on", "bright": 100, "cct": 10, "snm": 0, "dv": 0}
         self.return_values = {
             "get_prop": self._get_state,
@@ -180,7 +180,7 @@ class TestPhilipsBulb(TestCase):
 
 class DummyPhilipsWhiteBulb(DummyDevice, PhilipsWhiteBulb):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_PHILIPS_LIGHT_HBULB
+        self._model = MODEL_PHILIPS_LIGHT_HBULB
         self.state = {"power": "on", "bri": 100, "dv": 0}
         self.return_values = {
             "get_prop": self._get_state,

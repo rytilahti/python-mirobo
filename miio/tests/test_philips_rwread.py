@@ -15,7 +15,7 @@ from .dummies import DummyDevice
 
 class DummyPhilipsRwread(DummyDevice, PhilipsRwread):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_PHILIPS_LIGHT_RWREAD
+        self._model = MODEL_PHILIPS_LIGHT_RWREAD
         self.state = {
             "power": "on",
             "bright": 53,

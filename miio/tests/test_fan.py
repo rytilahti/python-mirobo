@@ -21,7 +21,7 @@ from .dummies import DummyDevice
 
 class DummyFanV2(DummyDevice, Fan):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_FAN_V2
+        self._model = MODEL_FAN_V2
         # This example response is just a guess. Please update!
         self.state = {
             "temp_dec": 232,
@@ -271,7 +271,7 @@ class TestFanV2(TestCase):
 
 class DummyFanV3(DummyDevice, Fan):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_FAN_V3
+        self._model = MODEL_FAN_V3
         self.state = {
             "temp_dec": 232,
             "humidity": 46,
@@ -527,7 +527,7 @@ class TestFanV3(TestCase):
 
 class DummyFanSA1(DummyDevice, Fan):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_FAN_SA1
+        self._model = MODEL_FAN_SA1
         self.state = {
             "angle": 120,
             "speed": 277,
@@ -745,7 +745,7 @@ class TestFanSA1(TestCase):
 
 class DummyFanP5(DummyDevice, FanP5):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_FAN_P5
+        self._model = MODEL_FAN_P5
         self.state = {
             "power": True,
             "mode": "normal",

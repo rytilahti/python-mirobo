@@ -16,7 +16,7 @@ from .dummies import DummyDevice
 
 class DummyPowerStripV1(DummyDevice, PowerStrip):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_POWER_STRIP_V1
+        self._model = MODEL_POWER_STRIP_V1
         self.state = {
             "power": "on",
             "mode": "normal",
@@ -108,7 +108,7 @@ class TestPowerStripV1(TestCase):
 
 class DummyPowerStripV2(DummyDevice, PowerStrip):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_POWER_STRIP_V2
+        self._model = MODEL_POWER_STRIP_V2
         self.state = {
             "power": "on",
             "mode": "normal",

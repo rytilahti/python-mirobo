@@ -168,6 +168,27 @@ class DeviceGroup(click.MultiCommand):
             self.func = func
             func._device_group_command = self
             self.kwargs.setdefault("help", self.func.__doc__)
+
+            def _autodetect_model_if_needed(func):
+                def _wrap(self, *args, **kwargs):
+                    skip_autodetect = func._device_group_command.kwargs.pop(
+                        "skip_autodetect", False
+                    )
+                    if (
+                        not skip_autodetect
+                        and self._model is None
+                        and self._info is None
+                    ):
+                        _LOGGER.debug("Unknown model, trying autodetection.")
+                        self.info()
+                    return func(self, *args, **kwargs)
+
+                # TODO HACK to make the command visible to cli
+                _wrap._device_group_command = func._device_group_command
+                return _wrap
+
+            func = _autodetect_model_if_needed(func)
+
             return func
 
         @property
@@ -183,6 +204,9 @@ class DeviceGroup(click.MultiCommand):
             else:
                 output = format_output("Running command {0}".format(self.command_name))
 
+            # Remove skip_autodetect before constructing the click.command
+            self.kwargs.pop("skip_autodetect", None)
+
             func = output(func)
             for decorator in self.decorators:
                 func = decorator(func)
@@ -195,6 +219,7 @@ class DeviceGroup(click.MultiCommand):
     DEFAULT_PARAMS = [
         click.Option(["--ip"], required=True, callback=validate_ip),
         click.Option(["--token"], required=True, callback=validate_token),
+        click.Option(["--model"], required=False),
     ]
 
     def __init__(

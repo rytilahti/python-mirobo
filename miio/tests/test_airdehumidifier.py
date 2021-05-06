@@ -17,7 +17,7 @@ from .dummies import DummyDevice
 
 class DummyAirDehumidifierV1(DummyDevice, AirDehumidifier):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_DEHUMIDIFIER_V1
+        self._model = MODEL_DEHUMIDIFIER_V1
         self.dummy_device_info = {
             "life": 348202,
             "uid": 1759530000,

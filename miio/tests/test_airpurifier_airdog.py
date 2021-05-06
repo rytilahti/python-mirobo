@@ -18,7 +18,7 @@ from .dummies import DummyDevice
 
 class DummyAirDogX3(DummyDevice, AirDogX3):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_AIRDOG_X3
+        self._model = MODEL_AIRDOG_X3
         self.state = {
             "power": "on",
             "mode": "manual",
@@ -149,7 +149,7 @@ class TestAirDogX3(TestCase):
 class DummyAirDogX5(DummyAirDogX3, AirDogX5):
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
-        self.model = MODEL_AIRDOG_X5
+        self._model = MODEL_AIRDOG_X5
         self.state = {
             "power": "on",
             "mode": "manual",
@@ -170,7 +170,7 @@ def airdogx5(request):
 class DummyAirDogX7SM(DummyAirDogX5, AirDogX7SM):
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
-        self.model = MODEL_AIRDOG_X7SM
+        self._model = MODEL_AIRDOG_X7SM
         self.state["hcho"] = 2
 
 
