@@ -50,7 +50,6 @@ class DummyVacuum(DummyDevice, Vacuum):
         }
 
         super().__init__(args, kwargs)
-        self.model = None
 
     def change_mode(self, new_mode):
         if new_mode == "spot":
@@ -275,3 +274,10 @@ class TestVacuum(TestCase):
             )
 
             assert len(self.device.clean_history().ids) == 0
+
+    def test_info_no_cloud(self):
+        """Test the info functionality for non-cloud connected device."""
+        from miio.exceptions import DeviceInfoUnavailableException
+
+        with patch("miio.Device.info", side_effect=DeviceInfoUnavailableException()):
+            assert self.device.info().model == "rockrobo.vacuum.v1"

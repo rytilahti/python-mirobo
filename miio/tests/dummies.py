@@ -36,6 +36,10 @@ class DummyDevice:
     def __init__(self, *args, **kwargs):
         self.start_state = self.state.copy()
         self._protocol = DummyMiIOProtocol(self)
+        self._model = None
+        self._info = None
+        self.token = "ffffffffffffffffffffffffffffffff"
+        self.ip = "192.0.2.1"
 
     def _reset_state(self):
         """Revert back to the original state."""
