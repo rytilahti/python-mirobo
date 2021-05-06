@@ -15,7 +15,7 @@ from .dummies import DummyDevice
 
 class DummyFanLeshow(DummyDevice, FanLeshow):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_FAN_LESHOW_SS4
+        self._model = MODEL_FAN_LESHOW_SS4
         self.state = {
             "power": 1,
             "mode": 2,

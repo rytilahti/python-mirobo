@@ -19,7 +19,7 @@ from .dummies import DummyDevice
 
 class DummyAirHumidifierV1(DummyDevice, AirHumidifier):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_HUMIDIFIER_V1
+        self._model = MODEL_HUMIDIFIER_V1
         self.dummy_device_info = {
             "fw_ver": "1.2.9_5033",
             "token": "68ffffffffffffffffffffffffffffff",
@@ -234,7 +234,7 @@ class TestAirHumidifierV1(TestCase):
 
 class DummyAirHumidifierCA1(DummyDevice, AirHumidifier):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_HUMIDIFIER_CA1
+        self._model = MODEL_HUMIDIFIER_CA1
         self.dummy_device_info = {
             "fw_ver": "1.6.6",
             "token": "68ffffffffffffffffffffffffffffff",
@@ -466,7 +466,7 @@ class TestAirHumidifierCA1(TestCase):
 
 class DummyAirHumidifierCB1(DummyDevice, AirHumidifier):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_HUMIDIFIER_CB1
+        self._model = MODEL_HUMIDIFIER_CB1
         self.dummy_device_info = {
             "fw_ver": "1.2.9_5033",
             "token": "68ffffffffffffffffffffffffffffff",

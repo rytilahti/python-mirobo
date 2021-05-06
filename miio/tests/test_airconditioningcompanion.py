@@ -222,7 +222,7 @@ class DummyAirConditioningCompanionV3(DummyDevice, AirConditioningCompanionV3):
     def __init__(self, *args, **kwargs):
         self.state = ["010507950000257301", "011001160100002573", "807"]
         self.device_prop = {"lumi.0": {"plug_state": ["on"]}}
-        self.model = MODEL_ACPARTNER_V3
+        self._model = MODEL_ACPARTNER_V3
         self.last_ir_played = None
 
         self.return_values = {
@@ -313,7 +313,7 @@ class TestAirConditioningCompanionV3(TestCase):
 class DummyAirConditioningCompanionMcn02(DummyDevice, AirConditioningCompanionMcn02):
     def __init__(self, *args, **kwargs):
         self.state = ["on", "cool", 28, "small_fan", "on", 441.0]
-        self.model = MODEL_ACPARTNER_MCN02
+        self._model = MODEL_ACPARTNER_MCN02
 
         self.return_values = {"get_prop": self._get_state}
         self.start_state = self.state.copy()

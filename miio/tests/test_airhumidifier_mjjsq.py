@@ -15,7 +15,7 @@ from .dummies import DummyDevice
 
 class DummyAirHumidifierMjjsq(DummyDevice, AirHumidifierMjjsq):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_HUMIDIFIER_JSQ1
+        self._model = MODEL_HUMIDIFIER_JSQ1
         self.state = {
             "Humidifier_Gear": 1,
             "Humidity_Value": 44,

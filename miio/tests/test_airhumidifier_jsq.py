@@ -17,7 +17,7 @@ from .dummies import DummyDevice
 
 class DummyAirHumidifierJsq(DummyDevice, AirHumidifierJsq):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_HUMIDIFIER_JSQ001
+        self._model = MODEL_HUMIDIFIER_JSQ001
 
         self.dummy_device_info = {
             "life": 575661,

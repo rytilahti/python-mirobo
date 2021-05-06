@@ -39,28 +39,28 @@ _INITIAL_STATE_HEATER = {
 class DummyHuizuo(DummyMiotDevice, Huizuo):
     def __init__(self, *args, **kwargs):
         self.state = _INITIAL_STATE
-        self.model = MODEL_HUIZUO_PIS123
+        self._model = MODEL_HUIZUO_PIS123
         super().__init__(*args, **kwargs)
 
 
 class DummyHuizuoFan(DummyMiotDevice, HuizuoLampFan):
     def __init__(self, *args, **kwargs):
         self.state = _INITIAL_STATE_FAN
-        self.model = MODEL_HUIZUO_FANWY
+        self._model = MODEL_HUIZUO_FANWY
         super().__init__(*args, **kwargs)
 
 
 class DummyHuizuoFan2(DummyMiotDevice, HuizuoLampFan):
     def __init__(self, *args, **kwargs):
         self.state = _INITIAL_STATE_FAN
-        self.model = MODEL_HUIZUO_FANWY2
+        self._model = MODEL_HUIZUO_FANWY2
         super().__init__(*args, **kwargs)
 
 
 class DummyHuizuoHeater(DummyMiotDevice, HuizuoLampHeater):
     def __init__(self, *args, **kwargs):
         self.state = _INITIAL_STATE_HEATER
-        self.model = MODEL_HUIZUO_WYHEAT
+        self._model = MODEL_HUIZUO_WYHEAT
         super().__init__(*args, **kwargs)
 
 

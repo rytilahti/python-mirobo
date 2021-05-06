@@ -25,7 +25,7 @@ from .dummies import DummyDevice
 
 class DummyToiletlidV1(DummyDevice, Toiletlid):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_TOILETLID_V1
+        self._model = MODEL_TOILETLID_V1
         self.state = {
             "is_on": False,
             "work_state": 1,

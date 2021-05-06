@@ -17,7 +17,7 @@ from .dummies import DummyDevice
 
 class DummyAirFresh(DummyDevice, AirFresh):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_AIRFRESH_VA2
+        self._model = MODEL_AIRFRESH_VA2
         self.state = {
             "power": "on",
             "ptc_state": None,
@@ -213,7 +213,7 @@ class TestAirFresh(TestCase):
 
 class DummyAirFreshVA4(DummyDevice, AirFresh):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_AIRFRESH_VA4
+        self._model = MODEL_AIRFRESH_VA4
         self.state = {
             "power": "on",
             "ptc_state": "off",

@@ -18,7 +18,7 @@ from .dummies import DummyDevice
 
 class DummyAirFreshA1(DummyDevice, AirFreshA1):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_AIRFRESH_A1
+        self._model = MODEL_AIRFRESH_A1
         self.state = {
             "power": True,
             "mode": "auto",
@@ -185,7 +185,7 @@ class TestAirFreshA1(TestCase):
 
 class DummyAirFreshT2017(DummyDevice, AirFreshT2017):
     def __init__(self, *args, **kwargs):
-        self.model = MODEL_AIRFRESH_T2017
+        self._model = MODEL_AIRFRESH_T2017
         self.state = {
             "power": True,
             "mode": "favourite",
