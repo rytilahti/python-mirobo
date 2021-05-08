@@ -21,6 +21,21 @@ class DummyLight(DummyDevice, Yeelight):
             "name": "test name",
             "lan_ctrl": "1",
             "save_state": "1",
+            "delayoff": "60",
+            "music_on": "1",
+            "flowing": "0",
+            "flow_params": "",
+            "active_mode": "1",
+            "nl_br": "100",
+            "bg_power": "off",
+            "bg_bright": "100",
+            "bg_lmode": "2",
+            "bg_rgb": "16711680",
+            "bg_hue": "359",
+            "bg_sat": "100",
+            "bg_ct": "3584",
+            "bg_flowing": "0",
+            "bg_flow_params": "",
         }
 
         self.return_values = {

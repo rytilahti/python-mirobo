@@ -1,6 +1,6 @@
 import warnings
 from enum import IntEnum
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import click
 
@@ -14,32 +14,53 @@ class YeelightException(DeviceException):
     pass
 
 
+class YeelightSubLightType(IntEnum):
+    Main = 1
+    Background = 2
+
+
+SUBLIGHT_PROP_PREFIX = {
+    YeelightSubLightType.Main: "",
+    YeelightSubLightType.Background: "bg_",
+}
+
+SUBLIGHT_COLOR_MODE_PROP = {
+    YeelightSubLightType.Main: "color_mode",
+    YeelightSubLightType.Background: "bg_lmode",
+}
+
+
 class YeelightMode(IntEnum):
     RGB = 1
     ColorTemperature = 2
     HSV = 3
 
 
-class YeelightStatus(DeviceStatus):
-    def __init__(self, data):
-        # ['power', 'bright', 'ct',   'rgb',      'hue', 'sat', 'color_mode', 'name', 'lan_ctrl', 'save_state']
-        # ['on',    '100',    '3584', '16711680', '359', '100', '2',          'name', '1',        '1']
+class YeelightSubLight(DeviceStatus):
+    def __init__(self, data, type):
         self.data = data
+        self.type = type
+
+    def get_prop_name(self, prop) -> str:
+        if prop == "color_mode":
+            return SUBLIGHT_COLOR_MODE_PROP[self.type]
+        else:
+            return SUBLIGHT_PROP_PREFIX[self.type] + prop
 
     @property
     def is_on(self) -> bool:
-        """Return whether the bulb is on or off."""
-        return self.data["power"] == "on"
+        """Return whether the light is on or off."""
+        return self.data[self.get_prop_name("power")] == "on"
 
     @property
     def brightness(self) -> int:
         """Return current brightness."""
-        return int(self.data["bright"])
+        return int(self.data[self.get_prop_name("bright")])
 
     @property
     def rgb(self) -> Optional[Tuple[int, int, int]]:
         """Return color in RGB if RGB mode is active."""
-        rgb = self.data["rgb"]
+        rgb = self.data[self.get_prop_name("rgb")]
         if self.color_mode == YeelightMode.RGB and rgb:
             return int_to_rgb(int(rgb))
         return None
@@ -47,14 +68,14 @@ class YeelightStatus(DeviceStatus):
     @property
     def color_mode(self) -> YeelightMode:
         """Return current color mode."""
-        return YeelightMode(int(self.data["color_mode"]))
+        return YeelightMode(int(self.data[self.get_prop_name("color_mode")]))
 
     @property
     def hsv(self) -> Optional[Tuple[int, int, int]]:
         """Return current color in HSV if HSV mode is active."""
-        hue = self.data["hue"]
-        sat = self.data["sat"]
-        brightness = self.data["bright"]
+        hue = self.data[self.get_prop_name("hue")]
+        sat = self.data[self.get_prop_name("sat")]
+        brightness = self.data[self.get_prop_name("bright")]
         if self.color_mode == YeelightMode.HSV and (hue or sat or brightness):
             return hue, sat, brightness
         return None
@@ -62,13 +83,78 @@ class YeelightStatus(DeviceStatus):
     @property
     def color_temp(self) -> Optional[int]:
         """Return current color temperature, if applicable."""
-        ct = self.data["ct"]
+        ct = self.data[self.get_prop_name("ct")]
         if self.color_mode == YeelightMode.ColorTemperature and ct:
             return int(ct)
         return None
 
     @property
-    def developer_mode(self) -> bool:
+    def color_flowing(self) -> bool:
+        """Return whether the color flowing is active."""
+        return bool(int(self.data[self.get_prop_name("flowing")]))
+
+    @property
+    def color_flow_params(self) -> Optional[str]:
+        """Return color flowing params."""
+        if self.color_flowing:
+            return self.data[self.get_prop_name("flow_params")]
+        return None
+
+
+class YeelightStatus(DeviceStatus):
+    def __init__(self, data):
+        # yeelink.light.ceiling4, yeelink.light.ceiling20
+        # {'name': '', 'lan_ctrl': '1', 'save_state': '1', 'delayoff': '0', 'music_on': '',  'power': 'off', 'bright': '1',   'color_mode': '2', 'rgb': '',        'hue': '',    'sat': '',   'ct': '4115', 'flowing': '0', 'flow_params': '0,0,2000,3,0,33,2000,3,0,100',                                                                                                          'active_mode': '1', 'nl_br': '1', 'bg_power': 'off', 'bg_bright': '100', 'bg_lmode': '1', 'bg_rgb': '15531811', 'bg_hue': '65',  'bg_sat': '86', 'bg_ct': '4000', 'bg_flowing': '0', 'bg_flow_params': '0,0,3000,4,16711680,100,3000,4,65280,100,3000,4,255,100'}
+        # yeelink.light.ceiling1
+        # {'name': '', 'lan_ctrl': '1', 'save_state': '1', 'delayoff': '0', 'music_on': '',  'power': 'off', 'bright': '100', 'color_mode': '2', 'rgb': '',        'hue': '',    'sat': '',   'ct': '5200', 'flowing': '0', 'flow_params': '',                                                                                                                                      'active_mode': '0', 'nl_br': '0', 'bg_power': '',    'bg_bright': '',    'bg_lmode': '',  'bg_rgb': '', 'bg_hue': '', 'bg_sat': '', 'bg_ct': '', 'bg_flowing': '', 'bg_flow_params': ''}
+        # yeelink.light.ceiling22 - like yeelink.light.ceiling1 but without "lan_ctrl"
+        # {'name': '', 'lan_ctrl': '',  'save_state': '1', 'delayoff': '0', 'music_on': '',  'power': 'off', 'bright': '84',  'color_mode': '2', 'rgb': '',        'hue': '',    'sat': '',   'ct': '4000', 'flowing': '0', 'flow_params': '0,0,800,2,2700,50,800,2,2700,30,1200,2,2700,80,800,2,2700,60,1200,2,2700,90,2400,2,2700,50,1200,2,2700,80,800,2,2700,60,400,2,2700,70', 'active_mode': '0', 'nl_br': '0', 'bg_power': '',    'bg_bright': '',    'bg_lmode': '',  'bg_rgb': '', 'bg_hue': '', 'bg_sat': '', 'bg_ct': '', 'bg_flowing': '', 'bg_flow_params': ''}
+        # yeelink.light.color3, yeelink.light.color4, yeelink.light.color5, yeelink.light.strip2
+        # {'name': '', 'lan_ctrl': '1', 'save_state': '1', 'delayoff': '0', 'music_on': '0', 'power': 'off', 'bright': '100', 'color_mode': '1', 'rgb': '2353663', 'hue': '186', 'sat': '86', 'ct': '6500', 'flowing': '0', 'flow_params': '0,0,1000,1,16711680,100,1000,1,65280,100,1000,1,255,100',                                                                               'active_mode': '',  'nl_br': '',  'bg_power': '',    'bg_bright': '',    'bg_lmode': '',  'bg_rgb': '', 'bg_hue': '', 'bg_sat': '', 'bg_ct': '', 'bg_flowing': '', 'bg_flow_params': ''}
+        self.data = data
+
+    @property
+    def is_on(self) -> bool:
+        """Return whether the light is on or off."""
+        return self.lights[0].is_on
+
+    @property
+    def brightness(self) -> int:
+        """Return current brightness."""
+        return self.lights[0].brightness
+
+    @property
+    def rgb(self) -> Optional[Tuple[int, int, int]]:
+        """Return color in RGB if RGB mode is active."""
+        return self.lights[0].rgb
+
+    @property
+    def color_mode(self) -> YeelightMode:
+        """Return current color mode."""
+        return self.lights[0].color_mode
+
+    @property
+    def hsv(self) -> Optional[Tuple[int, int, int]]:
+        """Return current color in HSV if HSV mode is active."""
+        return self.lights[0].hsv
+
+    @property
+    def color_temp(self) -> Optional[int]:
+        """Return current color temperature, if applicable."""
+        return self.lights[0].color_temp
+
+    @property
+    def color_flowing(self) -> bool:
+        """Return whether the color flowing is active."""
+        return self.lights[0].color_flowing
+
+    @property
+    def color_flow_params(self) -> Optional[str]:
+        """Return color flowing params."""
+        return self.lights[0].color_flow_params
+
+    @property
+    def developer_mode(self) -> Optional[bool]:
         """Return whether the developer mode is active."""
         lan_ctrl = self.data["lan_ctrl"]
         if lan_ctrl:
@@ -84,6 +170,79 @@ class YeelightStatus(DeviceStatus):
     def name(self) -> str:
         """Return the internal name of the bulb."""
         return self.data["name"]
+
+    @property
+    def delay_off(self) -> int:
+        """Return delay in minute before bulb is off."""
+        return int(self.data["delayoff"])
+
+    @property
+    def music_mode(self) -> Optional[bool]:
+        """Return whether the music mode is active."""
+        music_on = self.data["music_on"]
+        if music_on:
+            return bool(int(music_on))
+        return None
+
+    @property
+    def moonlight_mode(self) -> Optional[bool]:
+        """Return whether the moonlight mode is active."""
+        active_mode = self.data["active_mode"]
+        if active_mode:
+            return bool(int(active_mode))
+        return None
+
+    @property
+    def moonlight_mode_brightness(self) -> Optional[int]:
+        """Return current moonlight brightness."""
+        nl_br = self.data["nl_br"]
+        if nl_br:
+            return int(self.data["nl_br"])
+        return None
+
+    @property
+    def lights(self) -> List[YeelightSubLight]:
+        """Return list of sub lights."""
+        sub_lights = list({YeelightSubLight(self.data, YeelightSubLightType.Main)})
+        bg_power = self.data[
+            "bg_power"
+        ]  # to do: change this to model spec in the future.
+        if bg_power:
+            sub_lights.append(
+                YeelightSubLight(self.data, YeelightSubLightType.Background)
+            )
+        return sub_lights
+
+    @property
+    def cli_format(self) -> str:
+        """Return human readable sub lights string."""
+        s = f"Name: {self.name}\n"
+        s += f"Update default on change: {self.save_state_on_change}\n"
+        s += f"Delay in minute before off: {self.delay_off}\n"
+        if self.music_mode is not None:
+            s += f"Music mode: {self.music_mode}\n"
+        if self.developer_mode is not None:
+            s += f"Developer mode: {self.developer_mode}\n"
+        for light in self.lights:
+            s += f"{light.type.name} light\n"
+            s += f"   Power: {light.is_on}\n"
+            s += f"   Brightness: {light.brightness}\n"
+            s += f"   Color mode: {light.color_mode.name}\n"
+            if light.color_mode == YeelightMode.RGB:
+                s += f"   RGB: {light.rgb}\n"
+            elif light.color_mode == YeelightMode.HSV:
+                s += f"   HSV: {light.hsv}\n"
+            else:
+                s += f"   Temperature: {light.color_temp}\n"
+            s += f"   Color flowing mode: {light.color_flowing}\n"
+            if light.color_flowing:
+                s += f"   Color flowing parameters: {light.color_flow_params}\n"
+        if self.moonlight_mode is not None:
+            s += "Moonlight\n"
+            s += f"   Is in mode: {self.moonlight_mode}\n"
+            s += f"   Moonlight mode brightness: {self.moonlight_mode_brightness}\n"
+        s += "\n"
+        return s
 
 
 class Yeelight(Device):
@@ -105,34 +264,39 @@ class Yeelight(Device):
         )
         super().__init__(*args, **kwargs)
 
-    @command(
-        default_output=format_output(
-            "",
-            "Name: {result.name}\n"
-            "Power: {result.is_on}\n"
-            "Brightness: {result.brightness}\n"
-            "Color mode: {result.color_mode}\n"
-            "RGB: {result.rgb}\n"
-            "HSV: {result.hsv}\n"
-            "Temperature: {result.color_temp}\n"
-            "Developer mode: {result.developer_mode}\n"
-            "Update default on change: {result.save_state_on_change}\n"
-            "\n",
-        )
-    )
+    @command(default_output=format_output("", "{result.cli_format}"))
     def status(self) -> YeelightStatus:
         """Retrieve properties."""
         properties = [
-            "power",
-            "bright",
-            "ct",
-            "rgb",
-            "hue",
-            "sat",
-            "color_mode",
+            # general properties
             "name",
             "lan_ctrl",
             "save_state",
+            "delayoff",
+            "music_on",
+            # light properties
+            "power",
+            "bright",
+            "color_mode",
+            "rgb",
+            "hue",
+            "sat",
+            "ct",
+            "flowing",
+            "flow_params",
+            # moonlight properties
+            "active_mode",
+            "nl_br",
+            # background light properties
+            "bg_power",
+            "bg_bright",
+            "bg_lmode",
+            "bg_rgb",
+            "bg_hue",
+            "bg_sat",
+            "bg_ct",
+            "bg_flowing",
+            "bg_flow_params",
         ]
 
         values = self.get_properties(properties)
