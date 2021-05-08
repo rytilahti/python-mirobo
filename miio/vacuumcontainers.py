@@ -69,6 +69,21 @@ class VacuumStatus(DeviceStatus):
         # 'map_present': 1, 'in_cleaning': 3, 'in_returning': 0,
         # 'in_fresh_state': 0, 'lab_status': 1, 'water_box_status': 0,
         # 'fan_power': 102, 'dnd_enabled': 0, 'map_status': 3, 'lock_status': 0}]
+
+        # Example of S7 in charging mode
+        # new items: is_locating, water_box_mode, water_box_carriage_status,
+        # mop_forbidden_enable, adbumper_status, water_shortage_status,
+        # dock_type, dust_collection_status, auto_dust_collection, mop_mode, debug_mode
+        #
+        # [{'msg_ver': 2, 'msg_seq': 1839, 'state': 8, 'battery': 100,
+        # 'clean_time': 2311, 'clean_area': 35545000, 'error_code': 0,
+        # 'map_present': 1, 'in_cleaning': 0, 'in_returning': 0,
+        # 'in_fresh_state': 1, 'lab_status': 3, 'water_box_status': 1,
+        # 'fan_power': 102, 'dnd_enabled': 0, 'map_status': 3, 'is_locating': 0,
+        # 'lock_status': 0, 'water_box_mode': 202, 'water_box_carriage_status': 0,
+        # 'mop_forbidden_enable': 0, 'adbumper_status': [0, 0, 0],
+        # 'water_shortage_status': 0, 'dock_type': 0, 'dust_collection_status': 0,
+        # 'auto_dust_collection': 1,  'mop_mode': 300, 'debug_mode': 0}]
         self.data = data
 
     @property
@@ -174,6 +189,28 @@ class VacuumStatus(DeviceStatus):
     def is_water_box_attached(self) -> bool:
         """Return True is water box is installed."""
         return "water_box_status" in self.data and self.data["water_box_status"] == 1
+
+    @property
+    def is_water_box_carriage_attached(self) -> Optional[bool]:
+        """Return True if water box carriage (mop) is installed, None if sensor not
+        present."""
+        if "water_box_carriage_status" in self.data:
+            return self.data["water_box_carriage_status"] == 1
+        else:
+            return None
+
+    @property
+    def is_water_shortage(self) -> Optional[bool]:
+        """Returns True if water is low in the tank, None if sensor not present."""
+        if "water_shortage_status" in self.data:
+            return self.data["water_shortage_status"] == 1
+        else:
+            return None
+
+    @property
+    def is_child_lock(self) -> bool:
+        """Returns True if the child lock is active."""
+        return self.data["lock_status"] == 1
 
     @property
     def got_error(self) -> bool:

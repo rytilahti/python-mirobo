@@ -84,6 +84,13 @@ class FanspeedE2(enum.Enum):
     Turbo = 100
 
 
+class FanspeedS7(enum.Enum):
+    Quiet = 101
+    Balanced = 102
+    Turbo = 103
+    Max = 104
+
+
 class WaterFlow(enum.Enum):
     """Water flow strength on s5 max."""
 
@@ -93,10 +100,18 @@ class WaterFlow(enum.Enum):
     Maximum = 203
 
 
+class MopMode(enum.Enum):
+    """Mop routing on S7."""
+
+    Standard = 300
+    Deep = 301
+
+
 ROCKROBO_V1 = "rockrobo.vacuum.v1"
 ROCKROBO_S5 = "roborock.vacuum.s5"
 ROCKROBO_S6 = "roborock.vacuum.s6"
 ROCKROBO_S6_MAXV = "roborock.vacuum.a10"
+ROCKROBO_S7 = "roborock.vacuum.a15"
 
 
 class Vacuum(Device):
@@ -546,6 +561,8 @@ class Vacuum(Device):
                 self._fanspeeds = FanspeedV1
         elif self.model == "roborock.vacuum.e2":
             self._fanspeeds = FanspeedE2
+        elif self.model == ROCKROBO_S7:
+            self._fanspeeds = FanspeedS7
         else:
             self._fanspeeds = FanspeedV2
 
@@ -746,6 +763,29 @@ class Vacuum(Device):
     def set_waterflow(self, waterflow: WaterFlow):
         """Set water flow setting."""
         return self.send("set_water_box_custom_mode", [waterflow.value])
+
+    @command()
+    def mop_mode(self) -> Optional[MopMode]:
+        """Get mop mode setting."""
+        try:
+            return MopMode(self.send("get_mop_mode")[0])
+        except ValueError:
+            return None
+
+    @command(click.argument("mop_mode", type=EnumType(MopMode)))
+    def set_mop_mode(self, mop_mode: MopMode):
+        """Set mop mode setting."""
+        return self.send("set_mop_mode", [mop_mode.value])
+
+    @command()
+    def child_lock(self) -> bool:
+        """Get child lock setting."""
+        return self.send("get_child_lock_status")["lock_status"] == 1
+
+    @command(click.argument("lock", type=bool))
+    def set_child_lock(self, lock: bool) -> bool:
+        """Set child lock setting."""
+        return self.send("set_child_lock_status", {"lock_status": int(lock)})[0] == "ok"
 
     @classmethod
     def get_device_group(cls):

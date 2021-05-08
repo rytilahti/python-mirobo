@@ -115,6 +115,8 @@ def status(vac: miio.Vacuum):
 
     if res.error_code:
         click.echo(click.style("Error: %s !" % res.error, bold=True, fg="red"))
+    if res.is_water_shortage:
+        click.echo(click.style("Water is running low!", bold=True, fg="blue"))
     click.echo(click.style("State: %s" % res.state, bold=True))
     click.echo("Battery: %s %%" % res.battery)
     click.echo("Fanspeed: %s %%" % res.fanspeed)
@@ -124,6 +126,8 @@ def status(vac: miio.Vacuum):
     # click.echo("Map present: %s" % res.map)
     # click.echo("in_cleaning: %s" % res.in_cleaning)
     click.echo("Water box attached: %s" % res.is_water_box_attached)
+    if res.is_water_box_carriage_attached is not None:
+        click.echo("Mop attached: %s" % res.is_water_box_carriage_attached)
 
 
 @cli.command()
